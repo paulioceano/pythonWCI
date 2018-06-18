@@ -10,17 +10,17 @@ defaults: &defaults
           at: ~/
       - run:
           name: Creating environment variables
-          command: |
+          command: |         
             echo "AUTH0_CLIENT_ID=$AUTH0_TEST_CLIENT_ID" >> $AUTH0_CFG
             echo "AUTH0_DOMAIN=$AUTH0_TEST_DOMAIN">> $AUTH0_CFG
             echo "AUTH0_CLIENT_SECRET=$AUTH0_TEST_CLIENT_SECRET">> $AUTH0_CFG
-            echo "AUTH0_CALLBACK_URL=http://localhost:3000/callback">> $AUTH0_CFG
+            echo "AUTH0_CALLBACK_URL=https://localhost:3000/callback">> $AUTH0_CFG
             echo "AUTH0_AUDIENCE=$AUTH0_TEST_API_IDENTIFIER">> $AUTH0_CFG
       - run:
           name: Execute dockerized example
           command: |
             docker build -t $CIRCLE_JOB ./$SAMPLE_PATH
-            docker run -d -p 3000:3000 --name $CIRCLE_SHA1 -e AUTH0_DOMAIN=$AUTH0_TEST_DOMAIN -e AUTH0_AUDIENCE=$AUTH0_TEST_API_IDENTIFIER $CIRCLE_JOB
+            docker run -d -p 3000:3000 --name $CIRCLE_SHA1 -e AUTH0_DOMAIN=$AUTH0_TEST_DOMAIN -e AUTH0_AUDIENCE=$AUTH0_TEST_API_IDENTIFIER -e AUTH0_CLIENT_ID=$AUTH0_TEST_CLIENT_ID $CIRCLE_JOB
       - run:
           name: Wait for app to be available
           command: |
@@ -30,7 +30,7 @@ defaults: &defaults
       - run: 
           name: Run tests
           command: |
-            docker create --network host --name tester codeception/codeceptjs codeceptjs run-multiple --all --steps
+            docker create --network host --name tester codeception/codeceptjs codeceptjs run-multiple --verbose --all --steps
             docker cp $(pwd)/lock_login_test.js tester:/tests/lock_login_test.js
             docker cp $(pwd)/codecept.conf.js tester:/tests/codecept.conf.js
             docker start -i tester
@@ -52,7 +52,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: git clone https://github.com/rafanog/spa-script scripts
+      - run: git clone https://github.com/auth0-samples/spa-quickstarts-tests scripts
       - persist_to_workspace:
           root: ~/ 
           paths:
